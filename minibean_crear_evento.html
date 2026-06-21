@@ -579,7 +579,7 @@
         <div class="field">
           <label class="field-label" for="description">
             <span>Descripción</span>
-            <span class="optional">10–300 caracteres</span>
+            <span class="optional">5–300 caracteres</span>
           </label>
           <textarea
             class="text-area"
@@ -607,7 +607,7 @@
         <div class="field">
           <div class="field-label">
             <span>Hora</span>
-            <span class="optional">Bloques de 30 min</span>
+            <span class="optional">Bloques de 1 hora</span>
           </div>
           <div class="time-box">
             <div class="time-grid" id="timeGrid" role="radiogroup" aria-label="Hora de la actividad"></div>
@@ -628,7 +628,7 @@
           <div class="modality-toggle" id="modalityToggle" role="radiogroup" aria-label="Modalidad de la actividad">
             <button type="button" class="modality-btn" id="modalityOnline" data-modality="online" role="radio" aria-checked="false">
               <span class="modality-icon">🌐</span>
-              <span>Online</span>
+              <span>En línea</span>
             </button>
             <button type="button" class="modality-btn" id="modalityPresencial" data-modality="presencial" role="radio" aria-checked="false">
               <span class="modality-icon">📍</span>
@@ -642,7 +642,7 @@
 
         <div class="field" id="locationField">
           <label class="field-label" for="location">
-            <span>Ubicación</span>
+            <span id="locationLabel">Ubicación</span>
           </label>
           <input
             class="text-input"
@@ -782,14 +782,18 @@
   // La hora usa el mismo rango y separación de la app de disponibilidad.
   const START_HOUR = 8;
   const END_HOUR = 23;
-  const STEP_MIN = 30;
+  const STEP_MIN = 60;
 
   const tg = window.Telegram?.WebApp;
   const state = {
     categoryKey: null,
     itemKey: null,
     time: null,
-    modality: null
+    modality: null,
+    fieldValues: {
+      online: '',
+      presencial: ''
+    }
   };
 
   const categoriesEl = document.getElementById('categories');
@@ -802,6 +806,7 @@
   const descriptionInput = document.getElementById('description');
   const eventDateInput = document.getElementById('eventDate');
   const locationInput = document.getElementById('location');
+  const locationLabel = document.getElementById('locationLabel');
   const descriptionCounter = document.getElementById('descriptionCounter');
   const locationCounter = document.getElementById('locationCounter');
   const descriptionError = document.getElementById('descriptionError');
@@ -992,8 +997,27 @@
     validateForm();
   }
 
+  function updateLocationField(value) {
+    const isOnline = value === 'online';
+
+    locationLabel.textContent = isOnline ? 'Enlace de la llamada' : 'Ubicación';
+    locationInput.type = isOnline ? 'url' : 'text';
+    locationInput.inputMode = isOnline ? 'url' : 'text';
+    locationInput.autocomplete = isOnline ? 'url' : 'street-address';
+    locationInput.maxLength = isOnline ? 500 : 120;
+    locationInput.placeholder = isOnline
+      ? 'Ej. https://meet.google.com/abc-defg-hij'
+      : 'Ej. Canchas de CU, junto al Frontón Cerrado';
+    locationCounter.textContent = `${locationInput.value.length}/${locationInput.maxLength}`;
+  }
+
   function selectModality(value) {
+    if (state.modality) {
+      state.fieldValues[state.modality] = locationInput.value;
+    }
+
     state.modality = value;
+    locationInput.value = state.fieldValues[value] || '';
 
     modalityToggle.querySelectorAll('.modality-btn').forEach((btn) => {
       const isSelected = btn.dataset.modality === value;
@@ -1001,9 +1025,8 @@
       btn.setAttribute('aria-checked', String(isSelected));
     });
 
-    const isOnline = value === 'online';
-    locationField.classList.toggle('hidden', isOnline);
-    if (isOnline) setError(locationError, '');
+    updateLocationField(value);
+    setError(locationError, '');
 
     haptic('light');
     validateForm();
@@ -1056,6 +1079,24 @@
     element.classList.toggle('error-text', Boolean(message));
   }
 
+  function normalizeCallLink(value) {
+    const trimmed = value.trim();
+    if (!trimmed) return '';
+
+    const candidate = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)
+      ? trimmed
+      : `https://${trimmed}`;
+
+    try {
+      const url = new URL(candidate);
+      const validProtocol = url.protocol === 'http:' || url.protocol === 'https:';
+      const validHost = Boolean(url.hostname && url.hostname.includes('.'));
+      return validProtocol && validHost ? url.href : '';
+    } catch (error) {
+      return '';
+    }
+  }
+
   function validateForm(showErrors = false) {
     const description = descriptionInput.value.trim();
     const date = eventDateInput.value;
@@ -1065,15 +1106,21 @@
     const dateValid = Boolean(date) && date >= localDateString();
     const timeValid = Boolean(state.time);
     const modalityValid = state.modality === 'online' || state.modality === 'presencial';
-    const locationValid = state.modality === 'online' || (location.length >= 3 && location.length <= 120);
+    const onlineLink = state.modality === 'online' ? normalizeCallLink(location) : '';
+    const locationValid = state.modality === 'online'
+      ? Boolean(onlineLink) && location.length <= 500
+      : state.modality === 'presencial' && location.length >= 3 && location.length <= 120;
     const interestValid = Boolean(state.categoryKey && state.itemKey);
+    const locationMessage = state.modality === 'online'
+      ? 'Pega un enlace válido que comience con http:// o https://.'
+      : 'Escribe una ubicación válida.';
 
     if (showErrors) {
       setError(descriptionError, descriptionValid ? '' : 'Escribe al menos 10 caracteres.');
       setError(dateError, dateValid ? '' : 'Selecciona una fecha válida.');
       setError(timeError, timeValid ? '' : 'Selecciona una hora.');
-      setError(modalityError, modalityValid ? '' : 'Elige si es online o presencial.');
-      setError(locationError, locationValid ? '' : 'Escribe una ubicación válida.');
+      setError(modalityError, modalityValid ? '' : 'Elige si es en línea o presencial.');
+      setError(locationError, locationValid ? '' : locationMessage);
     } else {
       if (descriptionValid) setError(descriptionError, '');
       if (dateValid) setError(dateError, '');
@@ -1111,6 +1158,9 @@
     const category = DATA[state.categoryKey];
     const itemLabel = category.options[state.itemKey];
     const date = eventDateInput.value;
+    const fieldValue = state.modality === 'online'
+      ? normalizeCallLink(locationInput.value)
+      : locationInput.value.trim();
 
     return {
       action: 'create_event',
@@ -1124,7 +1174,8 @@
         time: state.time,
         datetime_local: `${date}T${state.time}`,
         modality: state.modality,
-        location: state.modality === 'online' ? 'Online' : locationInput.value.trim()
+        location: fieldValue,
+        meeting_link: state.modality === 'online' ? fieldValue : null
       }
     };
   }
@@ -1158,7 +1209,20 @@
   });
 
   locationInput.addEventListener('input', () => {
-    locationCounter.textContent = `${locationInput.value.length}/120`;
+    if (state.modality) {
+      state.fieldValues[state.modality] = locationInput.value;
+    }
+    locationCounter.textContent = `${locationInput.value.length}/${locationInput.maxLength}`;
+    validateForm();
+  });
+
+  locationInput.addEventListener('blur', () => {
+    if (state.modality !== 'online') return;
+    const normalized = normalizeCallLink(locationInput.value);
+    if (!normalized) return;
+    locationInput.value = normalized;
+    state.fieldValues.online = normalized;
+    locationCounter.textContent = `${locationInput.value.length}/${locationInput.maxLength}`;
     validateForm();
   });
 
