@@ -10,33 +10,33 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {
-    --bg: #F4F6F2;
+    --bg: #FAF6ED;
     --surface: #FFFFFF;
-    --surface-soft: #FAFBF9;
-    --ink: #1C2620;
-    --ink-soft: #5B6B61;
-    --line: #DCE3DA;
-    --accent: #FF6B35;
-    --accent-soft: #FFE1D0;
-    --accent-deep: #E5502A;
-    --success: #2E9D57;
-    --danger: #C83C32;
-    --shadow: 0 8px 24px rgba(28, 38, 32, .07);
+    --surface-soft: #FCFAF2;
+    --ink: #4A3F35;
+    --ink-soft: #8A7F6E;
+    --line: #E8E0D0;
+    --accent: #8FA889;
+    --accent-soft: #F4D58D;
+    --accent-deep: #6F8A68;
+    --success: #5C9A6B;
+    --danger: #C2604D;
+    --shadow: 0 8px 24px rgba(74, 63, 53, .07);
     --radius: 14px;
   }
 
   html[data-theme="dark"] {
-    --bg: #14201A;
-    --surface: #1B2920;
-    --surface-soft: #203027;
-    --ink: #EDF2EC;
-    --ink-soft: #9AB0A2;
-    --line: #2A3A30;
-    --accent: #FF7A45;
-    --accent-soft: #3A2A22;
-    --accent-deep: #FF8F5E;
-    --success: #65C985;
-    --danger: #FF8178;
+    --bg: #1F2A22;
+    --surface: #2A362C;
+    --surface-soft: #313F33;
+    --ink: #F2EFE6;
+    --ink-soft: #A8B5A0;
+    --line: #3A4A3C;
+    --accent: #9FBA98;
+    --accent-soft: #4A4326;
+    --accent-deep: #B8CCAE;
+    --success: #7FBF8E;
+    --danger: #E08C7A;
     --shadow: none;
   }
 
@@ -437,6 +437,42 @@
     font-size: 13px;
   }
 
+  .modality-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .modality-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    background: var(--surface-soft);
+    color: var(--ink);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: border-color .16s ease, background .16s ease, color .16s ease;
+  }
+
+  .modality-icon {
+    font-size: 16px;
+  }
+
+  .modality-btn.selected {
+    border-color: var(--accent-deep);
+    background: var(--accent);
+    color: #fff;
+  }
+
+  #locationField.hidden {
+    display: none;
+  }
+
   .fallback-footer {
     position: fixed;
     z-index: 20;
@@ -586,6 +622,25 @@
         </div>
 
         <div class="field">
+          <div class="field-label">
+            <span>Modalidad</span>
+          </div>
+          <div class="modality-toggle" id="modalityToggle" role="radiogroup" aria-label="Modalidad de la actividad">
+            <button type="button" class="modality-btn" id="modalityOnline" data-modality="online" role="radio" aria-checked="false">
+              <span class="modality-icon">🌐</span>
+              <span>Online</span>
+            </button>
+            <button type="button" class="modality-btn" id="modalityPresencial" data-modality="presencial" role="radio" aria-checked="false">
+              <span class="modality-icon">📍</span>
+              <span>Presencial</span>
+            </button>
+          </div>
+          <div class="helper-row">
+            <span id="modalityError"></span>
+          </div>
+        </div>
+
+        <div class="field" id="locationField">
           <label class="field-label" for="location">
             <span>Ubicación</span>
           </label>
@@ -698,7 +753,8 @@
   const state = {
     categoryKey: null,
     itemKey: null,
-    time: null
+    time: null,
+    modality: null
   };
 
   const categoriesEl = document.getElementById('categories');
@@ -720,6 +776,9 @@
   const timeGrid = document.getElementById('timeGrid');
   const timeHint = document.getElementById('timeHint');
   const selectedTimeText = document.getElementById('selectedTimeText');
+  const modalityToggle = document.getElementById('modalityToggle');
+  const modalityError = document.getElementById('modalityError');
+  const locationField = document.getElementById('locationField');
   const fallbackFooter = document.getElementById('fallbackFooter');
   const submitBtn = document.getElementById('submitBtn');
 
@@ -898,6 +957,23 @@
     validateForm();
   }
 
+  function selectModality(value) {
+    state.modality = value;
+
+    modalityToggle.querySelectorAll('.modality-btn').forEach((btn) => {
+      const isSelected = btn.dataset.modality === value;
+      btn.classList.toggle('selected', isSelected);
+      btn.setAttribute('aria-checked', String(isSelected));
+    });
+
+    const isOnline = value === 'online';
+    locationField.classList.toggle('hidden', isOnline);
+    if (isOnline) setError(locationError, '');
+
+    haptic('light');
+    validateForm();
+  }
+
   function localDateString(date = new Date()) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -953,22 +1029,25 @@
     const descriptionValid = description.length >= 10 && description.length <= 300;
     const dateValid = Boolean(date) && date >= localDateString();
     const timeValid = Boolean(state.time);
-    const locationValid = location.length >= 3 && location.length <= 120;
+    const modalityValid = state.modality === 'online' || state.modality === 'presencial';
+    const locationValid = state.modality === 'online' || (location.length >= 3 && location.length <= 120);
     const interestValid = Boolean(state.categoryKey && state.itemKey);
 
     if (showErrors) {
       setError(descriptionError, descriptionValid ? '' : 'Escribe al menos 10 caracteres.');
       setError(dateError, dateValid ? '' : 'Selecciona una fecha válida.');
       setError(timeError, timeValid ? '' : 'Selecciona una hora.');
+      setError(modalityError, modalityValid ? '' : 'Elige si es online o presencial.');
       setError(locationError, locationValid ? '' : 'Escribe una ubicación válida.');
     } else {
       if (descriptionValid) setError(descriptionError, '');
       if (dateValid) setError(dateError, '');
       if (timeValid) setError(timeError, '');
+      if (modalityValid) setError(modalityError, '');
       if (locationValid) setError(locationError, '');
     }
 
-    const valid = interestValid && descriptionValid && dateValid && timeValid && locationValid;
+    const valid = interestValid && descriptionValid && dateValid && timeValid && modalityValid && locationValid;
     updateSubmitState(valid);
     return valid;
   }
@@ -1009,7 +1088,8 @@
         date,
         time: state.time,
         datetime_local: `${date}T${state.time}`,
-        location: locationInput.value.trim()
+        modality: state.modality,
+        location: state.modality === 'online' ? 'Online' : locationInput.value.trim()
       }
     };
   }
@@ -1054,6 +1134,10 @@
 
   changeInterestBtn.addEventListener('click', changeInterest);
   submitBtn.addEventListener('click', submitEvent);
+
+  modalityToggle.querySelectorAll('.modality-btn').forEach((btn) => {
+    btn.addEventListener('click', () => selectModality(btn.dataset.modality));
+  });
 
   renderCategories();
   renderTimes();
