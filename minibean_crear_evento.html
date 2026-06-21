@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Crear evento — MiniBean</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: #F4F6F2;
+    --surface: #FFFFFF;
+    --surface-soft: #FAFBF9;
+    --ink: #1C2620;
+    --ink-soft: #5B6B61;
+    --line: #DCE3DA;
+    --accent: #FF6B35;
+    --accent-soft: #FFE1D0;
+    --accent-deep: #E5502A;
+    --success: #2E9D57;
+    --danger: #C83C32;
+    --shadow: 0 8px 24px rgba(28, 38, 32, .07);
+    --radius: 14px;
+  }
+
+  html[data-theme="dark"] {
+    --bg: #14201A;
+    --surface: #1B2920;
+    --surface-soft: #203027;
+    --ink: #EDF2EC;
+    --ink-soft: #9AB0A2;
+    --line: #2A3A30;
+    --accent: #FF7A45;
+    --accent-soft: #3A2A22;
+    --accent-deep: #FF8F5E;
+    --success: #65C985;
+    --danger: #FF8178;
+    --shadow: none;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    background: var(--bg);
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    overscroll-behavior-y: none;
+  }
+
+  button, input, textarea {
+    font: inherit;
+  }
+
+  button {
+    color: inherit;
+  }
+
+  #app {
+    width: min(100%, 680px);
+    margin: 0 auto;
+    padding: 18px 14px calc(108px + env(safe-area-inset-bottom));
+  }
+
+  .topbar {
+    padding: 0 4px 14px;
+  }
+
+  h1 {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0 0 6px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 23px;
+    font-weight: 600;
+    line-height: 1.15;
+  }
+
+  .sprout {
+    width: 27px;
+    height: 27px;
+    flex: 0 0 auto;
+  }
+
+  .subtitle {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    line-height: 1.45;
+  }
+
+  .section-label {
+    display: block;
+    margin: 0 2px 8px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .categories {
+    transition: opacity .2s ease, transform .25s ease, max-height .35s ease;
+  }
+
+  .category {
+    overflow: hidden;
+    margin-bottom: 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+
+  .category-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 15px;
+    border: 0;
+    background: var(--surface);
+    cursor: pointer;
+    text-align: left;
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  .category-header:active {
+    background: var(--surface-soft);
+  }
+
+  .arrow {
+    color: var(--ink-soft);
+    font-size: 13px;
+    transition: transform .2s ease;
+  }
+
+  .arrow.open {
+    transform: rotate(90deg);
+  }
+
+  .category-options {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows .24s ease;
+  }
+
+  .category-options.open {
+    grid-template-rows: 1fr;
+  }
+
+  .options-inner {
+    overflow: hidden;
+  }
+
+  .options-list {
+    padding: 0 10px 10px;
+  }
+
+  .interest-option {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 11px 8px;
+    border: 0;
+    border-top: 1px solid var(--line);
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    font-size: 14.5px;
+  }
+
+  .interest-option:first-child {
+    border-top: 0;
+  }
+
+  .interest-option:active {
+    background: var(--accent-soft);
+    border-radius: 9px;
+  }
+
+  .radio-dot {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border: 2px solid var(--line);
+    border-radius: 50%;
+  }
+
+  .radio-dot::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    transform: scale(0);
+    transition: transform .12s ease;
+  }
+
+  .interest-option.selected .radio-dot {
+    border-color: var(--accent);
+  }
+
+  .interest-option.selected .radio-dot::after {
+    transform: scale(1);
+  }
+
+  .selected-card {
+    display: none;
+    align-items: center;
+    gap: 11px;
+    padding: 12px 13px;
+    margin-bottom: 15px;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    background: var(--accent-soft);
+    animation: compactIn .25s ease both;
+  }
+
+  .selected-card.show {
+    display: flex;
+  }
+
+  .selected-icon {
+    width: 39px;
+    height: 39px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 11px;
+    background: var(--surface);
+    font-size: 21px;
+  }
+
+  .selected-copy {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .selected-category {
+    margin-bottom: 2px;
+    color: var(--ink-soft);
+    font-size: 11.5px;
+  }
+
+  .selected-interest {
+    overflow: hidden;
+    font-weight: 600;
+    font-size: 14.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .change-btn {
+    flex: 0 0 auto;
+    padding: 7px 9px;
+    border: 0;
+    border-radius: 9px;
+    background: var(--surface);
+    color: var(--accent-deep);
+    cursor: pointer;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  .event-form {
+    display: none;
+    animation: formIn .32s ease both;
+  }
+
+  .event-form.show {
+    display: block;
+  }
+
+  .form-card {
+    padding: 15px;
+    margin-bottom: 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+
+  .field {
+    margin-bottom: 15px;
+  }
+
+  .field:last-child {
+    margin-bottom: 0;
+  }
+
+  .field-label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0 1px 7px;
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+
+  .optional {
+    color: var(--ink-soft);
+    font-size: 11.5px;
+    font-weight: 400;
+  }
+
+  .text-input,
+  .text-area,
+  .date-input {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    outline: none;
+    background: var(--surface-soft);
+    color: var(--ink);
+    transition: border-color .16s ease, box-shadow .16s ease;
+  }
+
+  .text-input,
+  .date-input {
+    height: 47px;
+    padding: 0 12px;
+  }
+
+  .text-area {
+    min-height: 104px;
+    padding: 12px;
+    resize: vertical;
+    line-height: 1.45;
+  }
+
+  .text-input:focus,
+  .text-area:focus,
+  .date-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+
+  .date-input {
+    color-scheme: light;
+  }
+
+  html[data-theme="dark"] .date-input {
+    color-scheme: dark;
+  }
+
+  .helper-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 6px;
+    min-height: 15px;
+    color: var(--ink-soft);
+    font-size: 11.5px;
+  }
+
+  .error-text {
+    color: var(--danger);
+  }
+
+  .time-box {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    background: var(--surface-soft);
+  }
+
+  .time-grid {
+    max-height: 232px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+    overflow-y: auto;
+    padding: 10px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .time-slot {
+    min-height: 38px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  .time-slot.hour-start {
+    border-top-width: 2px;
+  }
+
+  .time-slot.selected {
+    border-color: var(--accent-deep);
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .time-slot:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+    text-decoration: line-through;
+  }
+
+  .time-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 11px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-soft);
+    font-size: 12px;
+  }
+
+  .time-summary strong {
+    color: var(--accent-deep);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+
+  .fallback-footer {
+    position: fixed;
+    z-index: 20;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+    padding: 11px 16px calc(13px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    backdrop-filter: blur(12px);
+  }
+
+  .fallback-footer.show {
+    display: block;
+  }
+
+  .submit-btn {
+    width: min(100%, 650px);
+    display: block;
+    margin: 0 auto;
+    padding: 13px;
+    border: 0;
+    border-radius: 11px;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 15.5px;
+    font-weight: 600;
+  }
+
+  .submit-btn:disabled {
+    background: var(--line);
+    color: var(--ink-soft);
+    cursor: not-allowed;
+  }
+
+  .empty-note {
+    padding: 18px 12px;
+    color: var(--ink-soft);
+    text-align: center;
+    font-size: 13px;
+  }
+
+  @keyframes compactIn {
+    from { opacity: 0; transform: scale(.98) translateY(-4px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  @keyframes formIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (min-width: 480px) {
+    .time-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      scroll-behavior: auto !important;
+      animation-duration: .01ms !important;
+      transition-duration: .01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <h1>
+      <svg class="sprout" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 21V12" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+        <path d="M12 12C12 7 8 5 4 5C4 9.5 7 12 12 12Z" fill="var(--accent)"/>
+        <path d="M12 12C12 8 15.5 6.5 19 7C18.6 10.5 16 12.5 12 12Z" fill="var(--accent)" opacity="0.7"/>
+      </svg>
+      Crea una actividad
+    </h1>
+    <p class="subtitle">Elige el interés principal y cuéntale a otros estudiantes qué plan tienes.</p>
+  </header>
+
+  <main>
+    <section id="interestSection" aria-labelledby="interestTitle">
+      <span class="section-label" id="interestTitle">1. ¿De qué será la actividad?</span>
+      <div class="categories" id="categories"></div>
+
+      <div class="selected-card" id="selectedCard" aria-live="polite">
+        <div class="selected-icon" id="selectedIcon">🌱</div>
+        <div class="selected-copy">
+          <div class="selected-category" id="selectedCategory"></div>
+          <div class="selected-interest" id="selectedInterest"></div>
+        </div>
+        <button type="button" class="change-btn" id="changeInterestBtn">Cambiar</button>
+      </div>
+    </section>
+
+    <form class="event-form" id="eventForm" novalidate>
+      <span class="section-label">2. Completa los detalles</span>
+
+      <div class="form-card">
+        <div class="field">
+          <label class="field-label" for="description">
+            <span>Descripción</span>
+            <span class="optional">10–300 caracteres</span>
+          </label>
+          <textarea
+            class="text-area"
+            id="description"
+            maxlength="300"
+            placeholder="Ej. Partido amistoso de fútbol. No importa el nivel, la idea es jugar y conocer gente."
+            autocomplete="off"
+          ></textarea>
+          <div class="helper-row">
+            <span id="descriptionError"></span>
+            <span id="descriptionCounter">0/300</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="eventDate">
+            <span>Fecha</span>
+          </label>
+          <input class="date-input" id="eventDate" type="date">
+          <div class="helper-row">
+            <span id="dateError"></span>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">
+            <span>Hora</span>
+            <span class="optional">Bloques de 30 min</span>
+          </div>
+          <div class="time-box">
+            <div class="time-grid" id="timeGrid" role="radiogroup" aria-label="Hora de la actividad"></div>
+            <div class="time-summary">
+              <span id="timeHint">Selecciona una hora</span>
+              <strong id="selectedTimeText">--:--</strong>
+            </div>
+          </div>
+          <div class="helper-row">
+            <span id="timeError"></span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="location">
+            <span>Ubicación</span>
+          </label>
+          <input
+            class="text-input"
+            id="location"
+            type="text"
+            maxlength="120"
+            placeholder="Ej. Canchas de CU, junto al Frontón Cerrado"
+            autocomplete="street-address"
+          >
+          <div class="helper-row">
+            <span id="locationError"></span>
+            <span id="locationCounter">0/120</span>
+          </div>
+        </div>
+      </div>
+    </form>
+  </main>
+</div>
+
+<div class="fallback-footer" id="fallbackFooter">
+  <button class="submit-btn" id="submitBtn" type="button" disabled>Crear actividad</button>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const DATA = {
+    arte_creatividad: {
+      label: '🎨 Arte y creatividad',
+      options: {
+        musica_tocar: 'Música (tocar/cantar)',
+        musica_escuchar: 'Música (escuchar/conciertos)',
+        dibujo_pintura: 'Dibujo o pintura',
+        fotografia_video: 'Fotografía o video',
+        escritura_creativa: 'Escritura creativa',
+        teatro: 'Teatro o actuación',
+        baile: 'Baile',
+        diseno: 'Diseño (gráfico, moda, etc.)'
+      }
+    },
+    deportes_movimiento: {
+      label: '⚽ Deportes y movimiento',
+      options: {
+        futbol: 'Fútbol',
+        basquet_volley: 'Básquetbol / volley',
+        running: 'Running o trote',
+        gym: 'Gym / pesas',
+        yoga_pilates: 'Yoga o pilates',
+        ciclismo: 'Ciclismo',
+        raqueta: 'Deportes de raqueta (tenis, pádel, etc.)',
+        artes_marciales: 'Artes marciales'
+      }
+    },
+    estudio_mente: {
+      label: '📚 Estudio y mente',
+      options: {
+        grupos_estudio: 'Grupos de estudio por materia',
+        idiomas: 'Idiomas',
+        debate_oratoria: 'Debate o oratoria',
+        lectura: 'Lectura (club de libros)',
+        ciencia_tecnologia: 'Ciencia y tecnología',
+        emprendimiento: 'Emprendimiento o negocios',
+        ajedrez: 'Ajedrez y juegos de estrategia',
+        programacion: 'Programación / proyectos personales'
+      }
+    },
+    naturaleza_vida_activa: {
+      label: '🌳 Naturaleza y vida activa',
+      options: {
+        senderismo: 'Senderismo (parques cercanos)',
+        ciclismo_recreativo: 'Ciclismo recreativo',
+        fotografia_paisaje: 'Fotografía de paisaje',
+        picnic: 'Picnic / día de campo',
+        jardineria: 'Jardinería',
+        observacion_naturaleza: 'Observación de aves/naturaleza'
+      }
+    },
+    juegos_socializacion: {
+      label: '🎲 Juegos y socialización',
+      options: {
+        juegos_mesa: 'Juegos de mesa',
+        videojuegos_casual: 'Videojuegos (casual)',
+        videojuegos_competitivo: 'Videojuegos (competitivo/esports)',
+        cartas: 'Cartas (poker, uno, etc.)',
+        trivia: 'Trivia / quiz nights',
+        karaoke: 'Karaoke'
+      }
+    },
+    comunidad_bienestar: {
+      label: '🤝 Comunidad y bienestar',
+      options: {
+        voluntariado: 'Voluntariado',
+        cocina: 'Cocina o repostería',
+        mascotas: 'Cuidado de mascotas/animales',
+        meditacion: 'Meditación o mindfulness',
+        cine_series: 'Cine y series (club)'
+      }
+    }
+  };
+
+  // La hora usa el mismo rango y separación de la app de disponibilidad.
+  const START_HOUR = 8;
+  const END_HOUR = 23;
+  const STEP_MIN = 30;
+
+  const tg = window.Telegram?.WebApp;
+  const state = {
+    categoryKey: null,
+    itemKey: null,
+    time: null
+  };
+
+  const categoriesEl = document.getElementById('categories');
+  const selectedCard = document.getElementById('selectedCard');
+  const selectedIcon = document.getElementById('selectedIcon');
+  const selectedCategory = document.getElementById('selectedCategory');
+  const selectedInterest = document.getElementById('selectedInterest');
+  const changeInterestBtn = document.getElementById('changeInterestBtn');
+  const eventForm = document.getElementById('eventForm');
+  const descriptionInput = document.getElementById('description');
+  const eventDateInput = document.getElementById('eventDate');
+  const locationInput = document.getElementById('location');
+  const descriptionCounter = document.getElementById('descriptionCounter');
+  const locationCounter = document.getElementById('locationCounter');
+  const descriptionError = document.getElementById('descriptionError');
+  const dateError = document.getElementById('dateError');
+  const timeError = document.getElementById('timeError');
+  const locationError = document.getElementById('locationError');
+  const timeGrid = document.getElementById('timeGrid');
+  const timeHint = document.getElementById('timeHint');
+  const selectedTimeText = document.getElementById('selectedTimeText');
+  const fallbackFooter = document.getElementById('fallbackFooter');
+  const submitBtn = document.getElementById('submitBtn');
+
+  function setupTelegram() {
+    if (!tg) {
+      fallbackFooter.classList.add('show');
+      return;
+    }
+
+    tg.ready();
+    tg.expand();
+    applyTheme();
+    tg.onEvent('themeChanged', applyTheme);
+
+    tg.MainButton.setText('Crear actividad');
+    tg.MainButton.hide();
+    tg.MainButton.onClick(submitEvent);
+  }
+
+  function applyTheme() {
+    if (!tg) return;
+    document.documentElement.setAttribute(
+      'data-theme',
+      tg.colorScheme === 'dark' ? 'dark' : 'light'
+    );
+  }
+
+  function haptic(style = 'light') {
+    try {
+      tg?.HapticFeedback?.impactOccurred(style);
+    } catch (error) {}
+  }
+
+  function categoryEmoji(label) {
+    return Array.from(label.trim())[0] || '🌱';
+  }
+
+  function renderCategories() {
+    categoriesEl.innerHTML = '';
+
+    for (const [categoryKey, category] of Object.entries(DATA)) {
+      const wrapper = document.createElement('article');
+      wrapper.className = 'category';
+
+      const header = document.createElement('button');
+      header.type = 'button';
+      header.className = 'category-header';
+      header.setAttribute('aria-expanded', 'false');
+      header.innerHTML = `
+        <span>${category.label}</span>
+        <span class="arrow" aria-hidden="true">▶</span>
+      `;
+
+      const options = document.createElement('div');
+      options.className = 'category-options';
+      const inner = document.createElement('div');
+      inner.className = 'options-inner';
+      const list = document.createElement('div');
+      list.className = 'options-list';
+
+      for (const [itemKey, itemLabel] of Object.entries(category.options)) {
+        const option = document.createElement('button');
+        option.type = 'button';
+        option.className = 'interest-option';
+        option.dataset.categoryKey = categoryKey;
+        option.dataset.itemKey = itemKey;
+        option.innerHTML = `
+          <span class="radio-dot" aria-hidden="true"></span>
+          <span>${itemLabel}</span>
+        `;
+        option.addEventListener('click', () => selectInterest(categoryKey, itemKey));
+        list.appendChild(option);
+      }
+
+      header.addEventListener('click', () => {
+        const opening = !options.classList.contains('open');
+        closeAllCategories(options);
+        options.classList.toggle('open', opening);
+        header.querySelector('.arrow').classList.toggle('open', opening);
+        header.setAttribute('aria-expanded', String(opening));
+      });
+
+      inner.appendChild(list);
+      options.appendChild(inner);
+      wrapper.appendChild(header);
+      wrapper.appendChild(options);
+      categoriesEl.appendChild(wrapper);
+    }
+  }
+
+  function closeAllCategories(exception = null) {
+    categoriesEl.querySelectorAll('.category-options').forEach((panel) => {
+      if (panel === exception) return;
+      panel.classList.remove('open');
+      const category = panel.closest('.category');
+      category?.querySelector('.arrow')?.classList.remove('open');
+      category?.querySelector('.category-header')?.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  function selectInterest(categoryKey, itemKey) {
+    state.categoryKey = categoryKey;
+    state.itemKey = itemKey;
+
+    const category = DATA[categoryKey];
+    const itemLabel = category.options[itemKey];
+
+    selectedIcon.textContent = categoryEmoji(category.label);
+    selectedCategory.textContent = category.label;
+    selectedInterest.textContent = itemLabel;
+
+    categoriesEl.style.display = 'none';
+    selectedCard.classList.add('show');
+    eventForm.classList.add('show');
+
+    haptic('medium');
+    validateForm();
+
+    setTimeout(() => {
+      eventForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      descriptionInput.focus({ preventScroll: true });
+    }, 160);
+  }
+
+  function changeInterest() {
+    state.categoryKey = null;
+    state.itemKey = null;
+    selectedCard.classList.remove('show');
+    eventForm.classList.remove('show');
+    categoriesEl.style.display = '';
+    updateSubmitState(false);
+    haptic('light');
+
+    setTimeout(() => {
+      document.getElementById('interestTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 30);
+  }
+
+  function timeLabel(hour, minute) {
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+  }
+
+  function renderTimes() {
+    timeGrid.innerHTML = '';
+
+    for (let hour = START_HOUR; hour < END_HOUR; hour += 1) {
+      for (let minute = 0; minute < 60; minute += STEP_MIN) {
+        const value = timeLabel(hour, minute);
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `time-slot${minute === 0 ? ' hour-start' : ''}`;
+        button.dataset.time = value;
+        button.textContent = value;
+        button.setAttribute('role', 'radio');
+        button.setAttribute('aria-checked', 'false');
+        button.addEventListener('click', () => selectTime(value));
+        timeGrid.appendChild(button);
+      }
+    }
+  }
+
+  function selectTime(value) {
+    const button = timeGrid.querySelector(`[data-time="${value}"]`);
+    if (!button || button.disabled) return;
+
+    state.time = value;
+    timeGrid.querySelectorAll('.time-slot').forEach((slot) => {
+      const selected = slot.dataset.time === value;
+      slot.classList.toggle('selected', selected);
+      slot.setAttribute('aria-checked', String(selected));
+    });
+
+    selectedTimeText.textContent = value;
+    timeHint.textContent = 'Hora seleccionada';
+    haptic('light');
+    validateForm();
+  }
+
+  function localDateString(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function setupDate() {
+    eventDateInput.min = localDateString();
+  }
+
+  function updatePastTimeSlots() {
+    const chosenDate = eventDateInput.value;
+    const today = localDateString();
+    const now = new Date();
+
+    timeGrid.querySelectorAll('.time-slot').forEach((slot) => {
+      let disabled = false;
+
+      if (chosenDate === today) {
+        const [hour, minute] = slot.dataset.time.split(':').map(Number);
+        const slotDate = new Date();
+        slotDate.setHours(hour, minute, 0, 0);
+        disabled = slotDate <= now;
+      }
+
+      slot.disabled = disabled;
+    });
+
+    const selectedButton = state.time
+      ? timeGrid.querySelector(`[data-time="${state.time}"]`)
+      : null;
+
+    if (selectedButton?.disabled) {
+      state.time = null;
+      selectedButton.classList.remove('selected');
+      selectedButton.setAttribute('aria-checked', 'false');
+      selectedTimeText.textContent = '--:--';
+      timeHint.textContent = 'Selecciona una hora';
+    }
+  }
+
+  function setError(element, message) {
+    element.textContent = message;
+    element.classList.toggle('error-text', Boolean(message));
+  }
+
+  function validateForm(showErrors = false) {
+    const description = descriptionInput.value.trim();
+    const date = eventDateInput.value;
+    const location = locationInput.value.trim();
+
+    const descriptionValid = description.length >= 10 && description.length <= 300;
+    const dateValid = Boolean(date) && date >= localDateString();
+    const timeValid = Boolean(state.time);
+    const locationValid = location.length >= 3 && location.length <= 120;
+    const interestValid = Boolean(state.categoryKey && state.itemKey);
+
+    if (showErrors) {
+      setError(descriptionError, descriptionValid ? '' : 'Escribe al menos 10 caracteres.');
+      setError(dateError, dateValid ? '' : 'Selecciona una fecha válida.');
+      setError(timeError, timeValid ? '' : 'Selecciona una hora.');
+      setError(locationError, locationValid ? '' : 'Escribe una ubicación válida.');
+    } else {
+      if (descriptionValid) setError(descriptionError, '');
+      if (dateValid) setError(dateError, '');
+      if (timeValid) setError(timeError, '');
+      if (locationValid) setError(locationError, '');
+    }
+
+    const valid = interestValid && descriptionValid && dateValid && timeValid && locationValid;
+    updateSubmitState(valid);
+    return valid;
+  }
+
+  function updateSubmitState(valid) {
+    submitBtn.disabled = !valid;
+
+    if (!tg) return;
+
+    if (!state.categoryKey) {
+      tg.MainButton.hide();
+      return;
+    }
+
+    tg.MainButton.show();
+    if (valid) {
+      tg.MainButton.enable();
+      tg.MainButton.setText('Crear actividad ✅');
+    } else {
+      tg.MainButton.disable();
+      tg.MainButton.setText('Completa los datos');
+    }
+  }
+
+  function buildPayload() {
+    const category = DATA[state.categoryKey];
+    const itemLabel = category.options[state.itemKey];
+    const date = eventDateInput.value;
+
+    return {
+      action: 'create_event',
+      event: {
+        category: state.categoryKey,
+        category_label: category.label,
+        interest: state.itemKey,
+        interest_label: itemLabel,
+        description: descriptionInput.value.trim(),
+        date,
+        time: state.time,
+        datetime_local: `${date}T${state.time}`,
+        location: locationInput.value.trim()
+      }
+    };
+  }
+
+  function submitEvent() {
+    if (!validateForm(true)) {
+      haptic('heavy');
+      const firstError = document.querySelector('.error-text:not(:empty)');
+      firstError?.closest('.field')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    const payload = buildPayload();
+    haptic('medium');
+
+    if (tg) {
+      tg.MainButton.showProgress();
+      try {
+        tg.sendData(JSON.stringify(payload));
+      } finally {
+        setTimeout(() => tg.MainButton.hideProgress(), 800);
+      }
+    } else {
+      alert(JSON.stringify(payload, null, 2));
+    }
+  }
+
+  descriptionInput.addEventListener('input', () => {
+    descriptionCounter.textContent = `${descriptionInput.value.length}/300`;
+    validateForm();
+  });
+
+  locationInput.addEventListener('input', () => {
+    locationCounter.textContent = `${locationInput.value.length}/120`;
+    validateForm();
+  });
+
+  eventDateInput.addEventListener('change', () => {
+    updatePastTimeSlots();
+    validateForm();
+  });
+
+  changeInterestBtn.addEventListener('click', changeInterest);
+  submitBtn.addEventListener('click', submitEvent);
+
+  renderCategories();
+  renderTimes();
+  setupDate();
+  setupTelegram();
+  updatePastTimeSlots();
+  validateForm();
+})();
+</script>
+</body>
+</html>
