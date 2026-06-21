@@ -671,11 +671,60 @@
   'use strict';
 
   const DATA = {
+    nuevo_ingreso_2026: {
+      label: '🆕 Nuevo ingreso 2026',
+      options: {
+        primera_semana: 'Mi primera semana en la universidad',
+        soy_foraneo: 'Soy foráneo(a)',
+        primer_sem_ingenieria: 'Primer semestre en ingeniería',
+        conociendo_campus: 'Conociendo el campus',
+        consejos_primer_semestre: 'Consejos para sobrevivir al primer semestre',
+        haciendo_nuevos_amigos: 'Haciendo nuevos amigos'
+      }
+    },
+    vida_universitaria: {
+      label: '🎓 Vida universitaria',
+      options: {
+        companeros_estudio: 'Busco compañeros de estudio',
+        grupos_estudio: 'Grupos de estudio por materia',
+        productividad: 'Productividad',
+        idiomas: 'Idiomas',
+        intercambio_idiomas: 'Intercambio de idiomas',
+        club_lectura: 'Club de lectura',
+        debate_oratoria: 'Debate o oratoria',
+        ciencia_tecnologia: 'Ciencia y tecnología',
+        emprendimiento: 'Emprendimiento o negocios',
+        ajedrez: 'Ajedrez y juegos de estrategia',
+        programacion: 'Programación / proyectos personales'
+      }
+    },
+    pasatiempos: {
+      label: '🎮 Pasatiempos',
+      options: {
+        videojuegos: 'Videojuegos',
+        anime: 'Anime',
+        musica_pt: 'Música',
+        dibujo_pt: 'Dibujo',
+        cocina_pt: 'Cocina',
+        gym_pt: 'Gym',
+        peliculas_series: 'Películas y series'
+      }
+    },
+    social: {
+      label: '☕ Social',
+      options: {
+        hacer_nuevos_amigos: 'Hacer nuevos amigos',
+        charlar_un_rato: 'Charlar un rato',
+        juegos_mesa_social: 'Juegos de mesa',
+        cafe_virtual: 'Café virtual',
+        no_conozco_a_nadie: 'No conozco a nadie todavía 🥺'
+      }
+    },
     arte_creatividad: {
       label: '🎨 Arte y creatividad',
       options: {
         musica_tocar: 'Música (tocar/cantar)',
-        musica_escuchar: 'Música (escuchar/conciertos)',
+        musica_escuchar: 'Música (escuchar/conciertos en la UNAM)',
         dibujo_pintura: 'Dibujo o pintura',
         fotografia_video: 'Fotografía o video',
         escritura_creativa: 'Escritura creativa',
@@ -694,26 +743,13 @@
         yoga_pilates: 'Yoga o pilates',
         ciclismo: 'Ciclismo',
         raqueta: 'Deportes de raqueta (tenis, pádel, etc.)',
-        artes_marciales: 'Artes marciales'
-      }
-    },
-    estudio_mente: {
-      label: '📚 Estudio y mente',
-      options: {
-        grupos_estudio: 'Grupos de estudio por materia',
-        idiomas: 'Idiomas',
-        debate_oratoria: 'Debate o oratoria',
-        lectura: 'Lectura (club de libros)',
-        ciencia_tecnologia: 'Ciencia y tecnología',
-        emprendimiento: 'Emprendimiento o negocios',
-        ajedrez: 'Ajedrez y juegos de estrategia',
-        programacion: 'Programación / proyectos personales'
+        artes_marciales: 'Artes marciales',
+        otro_deporte: 'Otro'
       }
     },
     naturaleza_vida_activa: {
       label: '🌳 Naturaleza y vida activa',
       options: {
-        senderismo: 'Senderismo (parques cercanos)',
         ciclismo_recreativo: 'Ciclismo recreativo',
         fotografia_paisaje: 'Fotografía de paisaje',
         picnic: 'Picnic / día de campo',
@@ -735,11 +771,10 @@
     comunidad_bienestar: {
       label: '🤝 Comunidad y bienestar',
       options: {
-        voluntariado: 'Voluntariado',
         cocina: 'Cocina o repostería',
         mascotas: 'Cuidado de mascotas/animales',
         meditacion: 'Meditación o mindfulness',
-        cine_series: 'Cine y series (club)'
+        voluntariado: 'Voluntariado'
       }
     }
   };
