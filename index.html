@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -78,7 +79,7 @@
     width: 52px;
   }
   td.cell {
-    border: 1px solid var(--line); height: 22px;
+    border: 1px solid var(--line); height: 34px;
     background: var(--surface); touch-action: pan-y;
     -webkit-touch-callout: none;
     transition: background .08s ease;
@@ -104,9 +105,9 @@
         <path d="M12 12C12 7 8 5 4 5C4 9.5 7 12 12 12Z" fill="var(--accent)"/>
         <path d="M12 12C12 8 15.5 6.5 19 7C18.6 10.5 16 12.5 12 12Z" fill="var(--accent)" opacity="0.7"/>
       </svg>
-      Marcá tus horarios libres
+      Marca tus horarios libres
     </h1>
-    <p class="hint">Mantené presionado y arrastrá para pintar varios bloques. Un toque marca uno solo.</p>
+    <p class="hint">Mantén presionado y arrastra para pintar varios bloques. Un toque marca uno solo.</p>
     <div class="meter-row">
       <span class="meter-text" id="meterText"><b>0h</b> marcadas</span>
       <button class="clear-btn" id="clearBtn">borrar todo</button>
@@ -120,7 +121,7 @@
   </div>
 
   <footer>
-    <button class="save-btn" id="saveBtn" disabled>Guardá tu disponibilidad</button>
+    <button class="save-btn" id="saveBtn" disabled>Guarda tu disponibilidad</button>
   </footer>
 </div>
 
@@ -138,9 +139,9 @@
 
   // ---- Config (ajustable) ----
   const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-  const START_HOUR = 8;
+  const START_HOUR = 7;
   const END_HOUR = 23;
-  const STEP_MIN = 30;
+  const STEP_MIN = 60;
 
   const rows = [];
   for (let h = START_HOUR; h < END_HOUR; h++) {
