@@ -1,0 +1,387 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Intereses — MiniBean</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+  --bg: #FAF6ED;
+  --surface: #FFFFFF;
+  --ink: #4A3F35;
+  --ink-soft: #8A7F6E;
+  --line: #E8E0D0;
+  --accent: #8FA889;
+  --accent-soft: #F4D58D;
+  --accent-deep: #6F8A68;
+  --radius: 10px;
+}
+  html[data-theme="dark"] {
+  --bg: #1F2A22;
+  --surface: #2A362C;
+  --ink: #F2EFE6;
+  --ink-soft: #A8B5A0;
+  --line: #3A4A3C;
+  --accent: #9FBA98;
+  --accent-soft: #4A4326;
+  --accent-deep: #B8CCAE;
+}
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg); color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    overscroll-behavior: none;
+  }
+  #app { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
+
+  header { padding: 16px 18px 8px; flex-shrink: 0; }
+  h1 {
+    font-family: 'Fredoka', sans-serif; font-weight: 600;
+    font-size: 19px; margin: 0 0 4px;
+  }
+  p.hint-static { font-size: 13px; color: var(--ink-soft); margin: 0 0 10px; line-height: 1.4; }
+
+  #counter {
+    font-family: 'JetBrains Mono', monospace; font-size: 12.5px;
+    color: var(--accent); font-weight: 600; margin-bottom: 4px;
+  }
+  #hint {
+    font-size: 12.5px; color: var(--ink-soft); min-height: 16px; margin-bottom: 10px;
+  }
+
+  #categories { flex: 1; padding: 0 14px 18px; }
+
+  .category {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); margin-bottom: 10px; overflow: hidden;
+  }
+  .category-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; cursor: pointer;
+    font-family: 'Fredoka', sans-serif; font-weight: 500; font-size: 15px;
+  }
+  .count-badge {
+    display: none; min-width: 20px; height: 20px; border-radius: 10px;
+    background: var(--accent); color: #fff; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 600; align-items: center; justify-content: center;
+    padding: 0 6px;
+  }
+  .count-badge.show { display: inline-flex; }
+  .arrow { font-size: 11px; color: var(--ink-soft); transition: transform .2s ease; display: inline-block; }
+  .arrow.open { transform: rotate(90deg); }
+
+  .category-options {
+    max-height: 0; overflow: hidden; transition: max-height .25s ease;
+    border-top: 1px solid transparent;
+  }
+  .category-options.open {
+    max-height: 600px; border-top: 1px solid var(--line);
+  }
+
+  .option {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 16px; font-size: 14px; cursor: pointer;
+    border-bottom: 1px solid var(--line);
+  }
+  .option:last-child { border-bottom: none; }
+  .option input[type="checkbox"] {
+    width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>🌱 Elige tus intereses</h1>
+    <p class="hint-static">Marca lo que te gusta. Mínimo 3, ideal 5-8.</p>
+    <div id="counter">0 seleccionados</div>
+    <div id="hint"></div>
+  </header>
+
+  <div id="categories"></div>
+</div>
+
+<script>
+const DATA = {
+  nuevo_ingreso_2026: {
+    label: "🆕 Nuevo ingreso 2026",
+    options: {
+      primera_semana: "Mi primera semana en la universidad",
+      soy_foraneo: "Soy foráneo(a)",
+      primer_sem_ingenieria: "Primer semestre en ingeniería",
+      conociendo_campus: "Conociendo el campus",
+      consejos_primer_semestre: "Consejos para sobrevivir al primer semestre",
+      haciendo_nuevos_amigos: "Haciendo nuevos amigos",
+    },
+  },
+  vida_universitaria: {
+    label: "🎓 Vida universitaria",
+    options: {
+      companeros_estudio: "Busco compañeros de estudio",
+      grupos_estudio: "Grupos de estudio por materia",
+      productividad: "Productividad",
+      idiomas: "Idiomas",
+      intercambio_idiomas: "Intercambio de idiomas",
+      club_lectura: "Club de lectura",
+      debate_oratoria: "Debate o oratoria",
+      ciencia_tecnologia: "Ciencia y tecnología",
+      emprendimiento: "Emprendimiento o negocios",
+      ajedrez: "Ajedrez y juegos de estrategia",
+      programacion: "Programación / proyectos personales",
+    },
+  },
+  pasatiempos: {
+    label: "🎮 Pasatiempos",
+    options: {
+      videojuegos: "Videojuegos",
+      anime: "Anime",
+      musica_pt: "Música",
+      dibujo_pt: "Dibujo",
+      cocina_pt: "Cocina",
+      gym_pt: "Gym",
+      peliculas_series: "Películas y series",
+    },
+  },
+  social: {
+    label: "☕ Social",
+    options: {
+      hacer_nuevos_amigos: "Hacer nuevos amigos",
+      charlar_un_rato: "Charlar un rato",
+      juegos_mesa_social: "Juegos de mesa",
+      cafe_virtual: "Café virtual",
+      no_conozco_a_nadie: "No conozco a nadie todavía 🥺",
+    },
+  },
+  arte_creatividad: {
+    label: "🎨 Arte y creatividad",
+    options: {
+      musica_tocar: "Música (tocar/cantar)",
+      musica_escuchar: "Música (escuchar/conciertos en la UNAM)",
+      dibujo_pintura: "Dibujo o pintura",
+      fotografia_video: "Fotografía o video",
+      escritura_creativa: "Escritura creativa",
+      teatro: "Teatro o actuación",
+      baile: "Baile",
+      diseno: "Diseño (gráfico, moda, etc.)",
+    },
+  },
+  deportes_movimiento: {
+    label: "⚽ Deportes y movimiento",
+    options: {
+      futbol: "Fútbol",
+      basquet_volley: "Básquetbol / volley",
+      running: "Running o trote",
+      gym: "Gym / pesas",
+      yoga_pilates: "Yoga o pilates",
+      ciclismo: "Ciclismo",
+      raqueta: "Deportes de raqueta (tenis, pádel, etc.)",
+      artes_marciales: "Artes marciales",
+      otro_deporte: "Otro",
+    },
+  },
+  naturaleza_vida_activa: {
+    label: "🌳 Naturaleza y vida activa",
+    options: {
+      ciclismo_recreativo: "Ciclismo recreativo",
+      fotografia_paisaje: "Fotografía de paisaje",
+      picnic: "Picnic / día de campo",
+      jardineria: "Jardinería",
+      observacion_naturaleza: "Observación de aves/naturaleza",
+    },
+  },
+  juegos_socializacion: {
+    label: "🎲 Juegos y socialización",
+    options: {
+      juegos_mesa: "Juegos de mesa",
+      videojuegos_casual: "Videojuegos (casual)",
+      videojuegos_competitivo: "Videojuegos (competitivo/esports)",
+      cartas: "Cartas (poker, uno, etc.)",
+      trivia: "Trivia / quiz nights",
+      karaoke: "Karaoke",
+    },
+  },
+  comunidad_bienestar: {
+    label: "🤝 Comunidad y bienestar",
+    options: {
+      cocina: "Cocina o repostería",
+      mascotas: "Cuidado de mascotas/animales",
+      meditacion: "Meditación o mindfulness",
+      voluntariado: "Voluntariado",
+    },
+  },
+};
+
+const MIN_INTERESES = 3;
+const MAX_SUAVE = 12;
+const selected = new Set();
+
+const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+
+function applyTheme() {
+  if (!tg) return;
+  document.documentElement.setAttribute('data-theme', tg.colorScheme === 'dark' ? 'dark' : 'light');
+}
+
+function render() {
+  const container = document.getElementById("categories");
+  container.innerHTML = "";
+
+  for (const [catKey, cat] of Object.entries(DATA)) {
+    const catDiv = document.createElement("div");
+    catDiv.className = "category";
+
+    const header = document.createElement("div");
+    header.className = "category-header";
+    header.innerHTML = `
+      <span>${cat.label}</span>
+      <span style="display:flex; align-items:center; gap:8px;">
+        <span class="count-badge" id="badge-${catKey}"></span>
+        <span class="arrow" id="arrow-${catKey}">▶</span>
+      </span>
+    `;
+
+    const optionsDiv = document.createElement("div");
+    optionsDiv.className = "category-options";
+    optionsDiv.id = `options-${catKey}`;
+
+    for (const [itemKey, itemLabel] of Object.entries(cat.options)) {
+      const id = `${catKey}|${itemKey}`;
+      const opt = document.createElement("label");
+      opt.className = "option";
+      opt.innerHTML = `
+        <input type="checkbox" data-id="${id}" data-cat="${catKey}" data-item="${itemKey}">
+        <span>${itemLabel}</span>
+      `;
+      optionsDiv.appendChild(opt);
+    }
+
+    header.addEventListener("click", () => {
+      const isOpen = optionsDiv.classList.contains("open");
+      optionsDiv.classList.toggle("open", !isOpen);
+      document.getElementById(`arrow-${catKey}`).classList.toggle("open", !isOpen);
+    });
+
+    catDiv.appendChild(header);
+    catDiv.appendChild(optionsDiv);
+    container.appendChild(catDiv);
+  }
+
+  container.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+    cb.addEventListener("change", () => {
+      const id = cb.dataset.id;
+      if (cb.checked) selected.add(id);
+      else selected.delete(id);
+      updateCounters();
+    });
+  });
+
+  updateCounters();
+}
+
+function updateCounters() {
+  document.getElementById("counter").textContent = `${selected.size} seleccionados`;
+
+  const countsByCat = {};
+  for (const id of selected) {
+    const [cat] = id.split("|");
+    countsByCat[cat] = (countsByCat[cat] || 0) + 1;
+  }
+  for (const catKey of Object.keys(DATA)) {
+    const badge = document.getElementById(`badge-${catKey}`);
+    const n = countsByCat[catKey] || 0;
+    badge.textContent = n;
+    badge.classList.toggle("show", n > 0);
+  }
+
+  const hint = document.getElementById("hint");
+  if (selected.size < MIN_INTERESES) {
+    hint.textContent = `Selecciona al menos ${MIN_INTERESES} para que el match funcione bien`;
+  } else if (selected.size > MAX_SUAVE) {
+    hint.textContent = "Tienes intereses variados 🙌 puedes afinar un poco si quieres";
+  } else {
+    hint.textContent = "";
+  }
+
+  if (tg) {
+    try {
+      if (selected.size >= MIN_INTERESES) {
+        tg.MainButton.setText(`Listo ✅ Enviar (${selected.size})`);
+        tg.MainButton.show();
+        tg.MainButton.enable();
+      } else {
+        tg.MainButton.setText(`Selecciona al menos ${MIN_INTERESES}`);
+        tg.MainButton.show();
+        tg.MainButton.disable();
+      }
+    } catch (e) {
+      console.error("Error actualizando MainButton:", e);
+    }
+  }
+}
+
+function submit() {
+  if (selected.size < MIN_INTERESES) return;
+
+  const interests = Array.from(selected).map((id) => {
+    const [category, item] = id.split("|");
+    return { category, item };
+  });
+
+  const category_counts = {};
+  for (const catKey of Object.keys(DATA)) category_counts[catKey] = 0;
+  for (const { category } of interests) category_counts[category]++;
+
+  const payload = {
+    type: "interests",
+    interests_version: "v1",
+    interests,
+    category_counts,
+    total_selected: interests.length,
+  };
+
+  if (tg) {
+    try {
+      tg.sendData(JSON.stringify(payload));
+    } catch (e) {
+      console.error("Error enviando datos:", e);
+    }
+  }
+}
+
+function init() {
+  if (tg) {
+    try {
+      tg.ready();
+      tg.expand();
+      applyTheme();
+      tg.onEvent('themeChanged', applyTheme);
+    } catch (e) {
+      console.error("No se pudo inicializar WebApp:", e);
+    }
+  }
+
+  render();
+
+  if (tg) {
+    try {
+      tg.MainButton.onClick(submit);
+    } catch (e) {
+      console.error("No se pudo inicializar MainButton:", e);
+    }
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
